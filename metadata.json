@@ -1,7 +1,0 @@
-{
-  "name": "Copy of Lumina Media Player",
-  "description": "An ultra-modern, AI-enhanced media player with real-time visualizers, smart mood analysis, and a sleek glassmorphic interface.",
-  "requestFramePermissions": [
-    "microphone"
-  ]
-}
