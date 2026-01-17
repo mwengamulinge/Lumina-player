@@ -6,17 +6,17 @@ import Visualizer from './components/Visualizer.tsx';
 import { MOCK_TRACKS } from './constants.ts';
 import { Track, AIAnalysis } from './types.ts';
 import { analyzeTrack } from './services/geminiService.ts';
-import { Sparkles, BrainCircuit, Activity, Clock, Play, Pause, List } from 'lucide-react';
+import { Sparkles, BrainCircuit, Activity, Clock, Play, Pause, List, Video } from 'lucide-react';
 
 const App: React.FC = () => {
-  const [tracks, setTracks] = useState<Track[]>(MOCK_TRACKS);
-  const [currentTrack, setCurrentTrack] = useState<Track>(MOCK_TRACKS[0]);
+  const [tracks, setTracks] = useState<Track[]>(MOCK_TRACKS.map(t => ({ ...t, mediaType: 'audio' })));
+  const [currentTrack, setCurrentTrack] = useState<Track>(tracks[0]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   
-  // Audio State
-  const audioRef = useRef<HTMLAudioElement>(null);
+  // Unified Media State (supports audio and video via video ref)
+  const mediaRef = useRef<HTMLVideoElement>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(0.8);
@@ -30,8 +30,8 @@ const App: React.FC = () => {
 
   useEffect(() => {
     fetchAIAnalysis(currentTrack);
-    if (isPlaying && audioRef.current) {
-      audioRef.current.play().catch(e => {
+    if (isPlaying && mediaRef.current) {
+      mediaRef.current.play().catch(e => {
         console.warn("Autoplay prevented or failed", e);
         setIsPlaying(false);
       });
@@ -39,17 +39,17 @@ const App: React.FC = () => {
   }, [currentTrack, fetchAIAnalysis]);
 
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume;
+    if (mediaRef.current) {
+      mediaRef.current.volume = volume;
     }
   }, [volume]);
 
   const togglePlay = () => {
-    if (!audioRef.current) return;
+    if (!mediaRef.current) return;
     if (isPlaying) {
-      audioRef.current.pause();
+      mediaRef.current.pause();
     } else {
-      audioRef.current.play().catch(console.error);
+      mediaRef.current.play().catch(console.error);
     }
     setIsPlaying(!isPlaying);
   };
@@ -67,54 +67,63 @@ const App: React.FC = () => {
   };
 
   const handleTimeUpdate = () => {
-    if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
+    if (mediaRef.current) {
+      setCurrentTime(mediaRef.current.currentTime);
     }
   };
 
   const handleLoadedMetadata = () => {
-    if (audioRef.current) {
-      setDuration(audioRef.current.duration);
+    if (mediaRef.current) {
+      setDuration(mediaRef.current.duration);
     }
   };
 
   const handleSeek = (time: number) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = time;
+    if (mediaRef.current) {
+      mediaRef.current.currentTime = time;
       setCurrentTime(time);
     }
   };
 
   const handleLocalFileImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    const url = URL.createObjectURL(file);
-    const newTrack: Track = {
-      id: Math.random().toString(36).substr(2, 9),
-      title: file.name.replace(/\.[^/.]+$/, ""),
-      artist: "Local Device",
-      album: "Imported Files",
-      coverUrl: `https://picsum.photos/seed/${file.name}/400/400`,
-      duration: 0,
-      genre: "Local",
-      audioUrl: url,
-      isLocal: true
-    };
+    const newTracks: Track[] = Array.from(files).map(file => {
+      const isVideo = file.type.startsWith('video/');
+      const url = URL.createObjectURL(file);
+      return {
+        id: Math.random().toString(36).substr(2, 9),
+        title: file.name.replace(/\.[^/.]+$/, ""),
+        artist: "Local Device",
+        album: isVideo ? "Local Video" : "Imported Files",
+        coverUrl: `https://picsum.photos/seed/${file.name}/400/400`,
+        duration: 0,
+        genre: isVideo ? "Video" : "Local",
+        audioUrl: url,
+        isLocal: true,
+        mediaType: isVideo ? 'video' : 'audio'
+      };
+    });
 
-    setTracks(prev => [newTrack, ...prev]);
-    setCurrentTrack(newTrack);
-    setIsPlaying(true);
+    setTracks(prev => [...newTracks, ...prev]);
+    if (newTracks.length > 0) {
+      setCurrentTrack(newTracks[0]);
+      setIsPlaying(true);
+    }
   };
 
   return (
     <div className="flex h-screen bg-slate-950 text-slate-50 overflow-hidden select-none">
-      <audio 
-        ref={audioRef}
+      {/* Hidden media element for centralized playback control */}
+      {/* Using video element because it handles audio files too */}
+      <video 
+        ref={mediaRef}
         src={currentTrack.audioUrl}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={nextTrack}
+        className="hidden"
       />
 
       <Sidebar onImport={handleLocalFileImport} />
@@ -140,14 +149,39 @@ const App: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 max-w-[1600px] mx-auto">
             <div className="lg:col-span-2 space-y-6 lg:space-y-8">
               <div className="relative group aspect-[16/10] lg:aspect-video rounded-3xl overflow-hidden border border-white/5 bg-slate-900 shadow-2xl">
+                
+                {/* Visualizer Area / Video Playback Area */}
                 <div className="absolute inset-0 z-0">
-                  <Visualizer isPlaying={isPlaying} colors={aiAnalysis?.colorPalette || ['#3b82f6', '#8b5cf6']} />
+                  {currentTrack.mediaType === 'video' ? (
+                    <video 
+                      src={currentTrack.audioUrl} 
+                      className="w-full h-full object-cover"
+                      // Sync visual video with the controller ref
+                      autoPlay={isPlaying}
+                      muted // Controller handles audio
+                      loop={false}
+                      onTimeUpdate={(e) => {
+                        // Keep current controller in sync if needed, though hidden ref is source of truth
+                      }}
+                      // Using a simpler approach: the controller IS the video element when playing video
+                      // But for clean UI switching, we'll clone the source to this visible element
+                      ref={(el) => {
+                         if (el && mediaRef.current) {
+                            el.currentTime = mediaRef.current.currentTime;
+                            if (isPlaying) el.play(); else el.pause();
+                         }
+                      }}
+                    />
+                  ) : (
+                    <Visualizer isPlaying={isPlaying} colors={aiAnalysis?.colorPalette || ['#3b82f6', '#8b5cf6']} />
+                  )}
                 </div>
+
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/10 to-transparent"></div>
                 <div className="absolute bottom-4 left-4 lg:bottom-8 lg:left-8 right-4 lg:right-8 flex items-end justify-between">
                   <div className="space-y-1 lg:space-y-2 max-w-[65%]">
                     <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-[8px] lg:text-[10px] font-extrabold uppercase tracking-[0.2em] rounded border border-blue-500/30">
-                      On Air
+                      {currentTrack.mediaType === 'video' ? 'Streaming' : 'On Air'}
                     </span>
                     <h1 className="text-2xl lg:text-5xl font-black tracking-tight text-white drop-shadow-2xl truncate leading-tight">
                       {currentTrack.title}
@@ -160,7 +194,6 @@ const App: React.FC = () => {
                     onClick={togglePlay}
                     className="w-14 h-14 lg:w-20 lg:h-20 bg-white rounded-full flex items-center justify-center text-slate-950 hover:scale-105 active:scale-95 transition-all shadow-[0_0_30px_rgba(255,255,255,0.3)] z-10"
                   >
-                    {/* Fixed: Removed invalid lg:size and used className for responsive sizing */}
                     {isPlaying ? <Pause className="w-7 h-7 lg:w-10 lg:h-10" fill="currentColor" /> : <Play className="w-7 h-7 lg:w-10 lg:h-10 ml-1" fill="currentColor" />}
                   </button>
                 </div>
@@ -189,6 +222,11 @@ const App: React.FC = () => {
                         <div className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity duration-300 ${currentTrack.id === track.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                            {currentTrack.id === track.id && isPlaying ? <Activity size={24} className="text-white animate-pulse" /> : <Play size={24} className="text-white" fill="white" />}
                         </div>
+                        {track.mediaType === 'video' && (
+                          <div className="absolute top-2 right-2 bg-blue-600 rounded-md p-1 shadow-lg">
+                            <Video size={14} className="text-white" />
+                          </div>
+                        )}
                       </div>
                       <h3 className="font-bold text-xs lg:text-sm truncate leading-tight">{track.title}</h3>
                       <p className="text-[10px] lg:text-xs text-slate-500 truncate mt-0.5">{track.artist}</p>
@@ -251,7 +289,7 @@ const App: React.FC = () => {
                   </div>
                 ) : (
                   <div className="py-12 text-center text-slate-500 text-xs font-bold uppercase tracking-widest">
-                    Awaiting Audio Input
+                    Awaiting Media Input
                   </div>
                 )}
                 <button 
@@ -266,7 +304,10 @@ const App: React.FC = () => {
                 <div className="space-y-5">
                   {tracks.filter(t => t.id !== currentTrack.id).slice(0, 3).map(track => (
                     <div key={track.id} onClick={() => setCurrentTrack(track)} className="flex items-center gap-4 group cursor-pointer transition-transform hover:translate-x-1">
-                      <img src={track.coverUrl} className="w-12 h-12 rounded-xl object-cover shadow-md" loading="lazy" />
+                      <div className="relative">
+                        <img src={track.coverUrl} className="w-12 h-12 rounded-xl object-cover shadow-md" loading="lazy" />
+                        {track.mediaType === 'video' && <Video size={10} className="absolute bottom-1 right-1 text-white" />}
+                      </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs lg:text-sm font-bold truncate group-hover:text-blue-400 transition-colors leading-tight">{track.title}</p>
                         <p className="text-[10px] text-slate-500 truncate mt-0.5">{track.artist}</p>

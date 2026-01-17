@@ -7,8 +7,9 @@ export interface Track {
   coverUrl: string;
   duration: number; // in seconds
   genre: string;
-  audioUrl: string;
+  audioUrl: string; // Used as the primary source URL for both audio and video
   isLocal?: boolean;
+  mediaType?: 'audio' | 'video';
 }
 
 export interface AIAnalysis {

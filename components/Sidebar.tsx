@@ -31,8 +31,14 @@ const Sidebar: React.FC<SidebarProps> = ({ onImport }) => {
           <nav className="flex flex-col gap-1">
             <label className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group cursor-pointer text-slate-400 hover:bg-white/5 hover:text-white">
               <Upload size={20} />
-              <span className="font-medium text-sm">Import Track</span>
-              <input type="file" accept="audio/*" className="hidden" onChange={onImport} />
+              <span className="font-medium text-sm">Import Tracks</span>
+              <input 
+                type="file" 
+                accept="audio/*,video/*" 
+                multiple 
+                className="hidden" 
+                onChange={onImport} 
+              />
             </label>
             <NavItem icon={<Music size={20} />} label="Liked Tracks" />
             <NavItem icon={<PlusSquare size={20} />} label="Create Playlist" />
@@ -55,7 +61,13 @@ const Sidebar: React.FC<SidebarProps> = ({ onImport }) => {
         <MobileNavItem icon={<Search size={22} />} label="Search" />
         <label className="p-2 text-slate-400">
            <Upload size={22} />
-           <input type="file" accept="audio/*" className="hidden" onChange={onImport} />
+           <input 
+             type="file" 
+             accept="audio/*,video/*" 
+             multiple 
+             className="hidden" 
+             onChange={onImport} 
+           />
         </label>
         <MobileNavItem icon={<Library size={22} />} label="Library" />
       </nav>
