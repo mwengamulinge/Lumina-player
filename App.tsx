@@ -120,7 +120,6 @@ const App: React.FC = () => {
       <Sidebar onImport={handleLocalFileImport} />
 
       <main className="flex-1 flex flex-col relative overflow-hidden pb-[calc(80px+env(safe-area-inset-bottom))] lg:pb-0">
-        {/* Top Header */}
         <header className="h-14 lg:h-16 flex items-center justify-between px-6 lg:px-8 border-b border-white/5 z-20 backdrop-blur-xl bg-slate-950/50 sticky top-0">
           <div className="flex items-center gap-4">
              <div className="flex items-center gap-2 bg-white/5 px-2.5 py-1 rounded-full border border-white/10">
@@ -137,18 +136,14 @@ const App: React.FC = () => {
           </div>
         </header>
 
-        {/* Content Area */}
         <div className="flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 max-w-[1600px] mx-auto">
-            
-            {/* Visualizer & Hero Section */}
             <div className="lg:col-span-2 space-y-6 lg:space-y-8">
               <div className="relative group aspect-[16/10] lg:aspect-video rounded-3xl overflow-hidden border border-white/5 bg-slate-900 shadow-2xl">
                 <div className="absolute inset-0 z-0">
                   <Visualizer isPlaying={isPlaying} colors={aiAnalysis?.colorPalette || ['#3b82f6', '#8b5cf6']} />
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/10 to-transparent"></div>
-                
                 <div className="absolute bottom-4 left-4 lg:bottom-8 lg:left-8 right-4 lg:right-8 flex items-end justify-between">
                   <div className="space-y-1 lg:space-y-2 max-w-[65%]">
                     <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-[8px] lg:text-[10px] font-extrabold uppercase tracking-[0.2em] rounded border border-blue-500/30">
@@ -165,12 +160,12 @@ const App: React.FC = () => {
                     onClick={togglePlay}
                     className="w-14 h-14 lg:w-20 lg:h-20 bg-white rounded-full flex items-center justify-center text-slate-950 hover:scale-105 active:scale-95 transition-all shadow-[0_0_30px_rgba(255,255,255,0.3)] z-10"
                   >
-                    {isPlaying ? <Pause size={28} lg:size={40} fill="currentColor" /> : <Play size={28} lg:size={40} fill="currentColor" className="ml-1" />}
+                    {/* Fixed: Removed invalid lg:size and used className for responsive sizing */}
+                    {isPlaying ? <Pause className="w-7 h-7 lg:w-10 lg:h-10" fill="currentColor" /> : <Play className="w-7 h-7 lg:w-10 lg:h-10 ml-1" fill="currentColor" />}
                   </button>
                 </div>
               </div>
 
-              {/* Browse Section */}
               <section>
                 <div className="flex items-center justify-between mb-4 lg:mb-6">
                   <h2 className="text-lg lg:text-2xl font-black tracking-tight">Your Galaxy</h2>
@@ -203,7 +198,6 @@ const App: React.FC = () => {
               </section>
             </div>
 
-            {/* AI Sidebar */}
             <div className="space-y-6">
               <div className="bg-slate-900/40 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 flex flex-col gap-6 shadow-2xl">
                 <div className="flex items-center gap-3">
@@ -236,14 +230,12 @@ const App: React.FC = () => {
                         ))}
                       </div>
                     </div>
-
                     <div className="space-y-2">
                       <label className="text-[9px] font-black uppercase text-slate-500 tracking-[0.2em]">Poetic Logic</label>
                       <p className="text-sm text-slate-300 leading-relaxed font-medium italic opacity-90">
                         "{aiAnalysis.description}"
                       </p>
                     </div>
-
                     <div className="space-y-3">
                       <label className="text-[9px] font-black uppercase text-slate-500 tracking-[0.2em]">Chroma Signature</label>
                       <div className="flex gap-4">
@@ -262,7 +254,6 @@ const App: React.FC = () => {
                     Awaiting Audio Input
                   </div>
                 )}
-
                 <button 
                   onClick={() => fetchAIAnalysis(currentTrack)}
                   className="w-full py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-500/20 hover:scale-[1.02] active:scale-95 transition-all"
@@ -270,7 +261,6 @@ const App: React.FC = () => {
                   Neural Refresh
                 </button>
               </div>
-
               <div className="bg-gradient-to-br from-slate-900 to-indigo-950/30 border border-white/10 rounded-3xl p-6 shadow-2xl">
                 <h3 className="font-black text-sm uppercase tracking-widest mb-6 opacity-60">Neural Queue</h3>
                 <div className="space-y-5">
@@ -286,11 +276,9 @@ const App: React.FC = () => {
                 </div>
               </div>
             </div>
-
           </div>
         </div>
 
-        {/* Persistent Player */}
         <Player 
           track={currentTrack} 
           isPlaying={isPlaying} 

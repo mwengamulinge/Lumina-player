@@ -63,16 +63,19 @@ const Player: React.FC<PlayerProps> = ({
             <Shuffle size={18} />
           </button>
           <button onClick={onPrev} className="p-1 text-slate-300 hover:text-white transition-all active:scale-90">
-            <SkipBack size={20} lg:size={24} fill="currentColor" />
+            {/* Fixed: Removed invalid lg:size and used className for responsive sizing */}
+            <SkipBack className="w-5 h-5 lg:w-6 lg:h-6" fill="currentColor" />
           </button>
           <button 
             onClick={onTogglePlay}
             className="w-10 h-10 lg:w-12 lg:h-12 bg-white rounded-full flex items-center justify-center text-slate-950 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/10"
           >
-            {isPlaying ? <Pause size={20} lg:size={24} fill="currentColor" /> : <Play size={20} lg:size={24} fill="currentColor" className="ml-1" />}
+            {/* Fixed: Removed invalid lg:size and used className for responsive sizing */}
+            {isPlaying ? <Pause className="w-5 h-5 lg:w-6 lg:h-6" fill="currentColor" /> : <Play className="w-5 h-5 lg:w-6 lg:h-6 ml-1" fill="currentColor" />}
           </button>
           <button onClick={onNext} className="p-1 text-slate-300 hover:text-white transition-all active:scale-90">
-            <SkipForward size={20} lg:size={24} fill="currentColor" />
+            {/* Fixed: Removed invalid lg:size and used className for responsive sizing */}
+            <SkipForward className="w-5 h-5 lg:w-6 lg:h-6" fill="currentColor" />
           </button>
           <button className="hidden lg:block text-slate-500 hover:text-white transition-colors">
             <Repeat size={18} />
